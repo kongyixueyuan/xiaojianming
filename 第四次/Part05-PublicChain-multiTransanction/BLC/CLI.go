@@ -17,7 +17,7 @@ func (cli *CLI)Run() {
 
 	createBlockchainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
-	printChainCmd := flag.NewFlagSet("printblockchain", flag.ExitOnError)
+	printChainCmd := flag.NewFlagSet("printChain", flag.ExitOnError)
 	getBalanceCmd := flag.NewFlagSet("getBalance", flag.ExitOnError)
 
 	createBlockchainData := createBlockchainCmd.String("address", "", "创建创世区块的地址")
@@ -37,7 +37,7 @@ func (cli *CLI)Run() {
 			if err != nil {
 				log.Panic(err)
 			}
-		case "printblockchain":
+		case "printChain":
 			err := printChainCmd.Parse(os.Args[2:])
 			if err != nil {
 				log.Panic(err)
@@ -94,7 +94,7 @@ func PrintUsage(){
 	fmt.Println("Usage:")
 	fmt.Println("\tcreateblockchain -address DATA --创建区块链")
 	fmt.Println("\tsend -form FROM -to TO -amount AMOUNT --交易明细")
-	fmt.Println("\tprintblockchain --打印区块链信息")
+	fmt.Println("\tprintChain --打印区块链信息")
 	fmt.Println("\tgetBalance -address DATA --查询账户余额")
 }
 

@@ -54,19 +54,15 @@ func (block *Block)GetBlockInfo(){
 		fmt.Printf("Transaction Hash:0x%x\n", tx.TxHash)
 		fmt.Println("Vins:")
 		for _,in := range tx.Vins{
-			fmt.Printf("[0x%x\n", in.TxHash)
-			fmt.Printf("%d\n", in.Vout)
-			fmt.Printf("%s]\n", in.ScriptSig)
+			fmt.Printf("[0x%x %d, %s]\n", in.TxHash, in.Vout, in.ScriptSig)
 		}
 
 		fmt.Println("Vouts:")
 		for _,out := range tx.Vouts{
-			fmt.Printf("[%d\n", out.Value)
+			fmt.Printf("[%d ", out.Value)
 			fmt.Printf("%s]\n", out.ScriptPubKey)
 		}
-
 	}
-
 	fmt.Println("Timestamp:", time.Unix(block.Timestamp,0).Format("2006-01-02 03:04:05 PM"))
 	fmt.Printf("PrevHash:0x%x\n", block.PrevHash)
 	fmt.Printf("Hash    :0x%x\n", block.Hash)

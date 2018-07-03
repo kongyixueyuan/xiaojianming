@@ -46,6 +46,7 @@ func (pow *ProofOfWork)Run(){
 
 		if hashInt.Cmp(pow.TargetBit) == -1{
 			pow.block.Hash = hash[:]
+			pow.block.Nonce = nonce
 			break
 		}
 		nonce++

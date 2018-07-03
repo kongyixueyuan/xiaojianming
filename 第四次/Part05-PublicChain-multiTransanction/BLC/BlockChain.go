@@ -153,8 +153,10 @@ func (bc *BlockChain)MineNewBlock(from, to, amount []string){
 			log.Panic("数据库表为空")
 		}
 		//构造交易Transaction
-		amountValue,_ := strconv.Atoi(amount[0])
-		txs = append(txs,NewSimpleTransaction(from[0], to[0] , int64(amountValue),bc))
+		for index,addr := range from {
+			amountValue,_ := strconv.Atoi(amount[index])
+			txs = append(txs,NewSimpleTransaction(addr, to[index] , int64(amountValue),bc, txs))
+		}
 		//balances, _ :=  strconv.Atoi(amount[0])
 		//txs = append(txs, NewUTXOTransaction(from[0], to[0],int64(balances)))
 		newBlock := CreateNewBlock(txs,block.Height + 1, block.Hash)
@@ -173,30 +175,54 @@ func (bc *BlockChain)MineNewBlock(from, to, amount []string){
 		log.Panic("MineNewBlock():更新数据库失败")
 	}
 }
-////创建区块链
-//func CreateBlockChain()*BlockChain{
-//	gensisBlock := CreateGenesisBlock()
-//	return &BlockChain{[]*Block{gensisBlock}}
-//}
-//
-////添加新的区块
-//func (bc *BlockChain)AddNewBlock(data string){
-//	currentHeigth := int64(len(bc.Blocks))
-//	block := CreateNewBlock(data, currentHeigth + 1, bc.Blocks[currentHeigth -1].Hash)
-//	bc.Blocks = append(bc.Blocks, block)
-//}
+
 
 //找到未花费输出的交易
-func (bc *BlockChain)FindUnspentTransactions(address string)[]Transaction{
+func (bc *BlockChain)FindUnspentTransactions(address string, txs []*Transaction)[]Transaction{
 
 	var unspentTXs []Transaction
 	spentTXOs := make(map[string][]int64)
+	for _,tx :=range txs{
+
+		txHash := hex.EncodeToString(tx.TxHash)
+		//1、遍历输出
+		Outputs1:
+		for outIdx,out:= range tx.Vouts {
+			if spentTXOs[txHash] != nil {
+				for _,spendOut := range spentTXOs[txHash]{
+					if spendOut == int64(outIdx){
+						continue Outputs1
+					}
+				}
+			}
+			if out.CanBeUnlockedWith(address){
+				unspentTXs = append(unspentTXs, *tx)
+			}
+		}
+		//遍历输入
+		if tx.IsCoinBaseTx() == false {
+			for _, in := range tx.Vins{
+				if in.CanUnlockOutputWith(address) {
+					inTxID := hex.EncodeToString(in.TxHash)
+					spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
+				}
+			}
+		}
+	}
 	bci := bc.Iterator()
 	for {
 		block := bci.Next()
 		for _, tx := range block.Txs{
 			txHash := hex.EncodeToString(tx.TxHash)
-
+			//遍历输入
+			if tx.IsCoinBaseTx() == false {
+				for _, in := range tx.Vins{
+					if in.CanUnlockOutputWith(address) {
+						inTxID := hex.EncodeToString(in.TxHash)
+						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
+					}
+				}
+			}
 			//1、遍历输出
 			Outputs:
 			for outIdx,out:= range tx.Vouts {
@@ -211,15 +237,6 @@ func (bc *BlockChain)FindUnspentTransactions(address string)[]Transaction{
 					unspentTXs = append(unspentTXs, *tx)
 				}
 			}
-			//遍历输入
-			if tx.IsCoinBaseTx() == false {
-				for _, in := range tx.Vins{
-					if in.CanUnlockOutputWith(address) {
-						inTxID := hex.EncodeToString(in.TxHash)
-						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
-					}
-				}
-			}
 		}
 		//遍历到头退出循环
 		var hashInt big.Int
@@ -228,11 +245,13 @@ func (bc *BlockChain)FindUnspentTransactions(address string)[]Transaction{
 			break
 		}
 	}
+
 	return unspentTXs
 }
+
 func (bc *BlockChain) FindUTXO(address string) []*TxOutput {
 	var UTXOs []*TxOutput
-	unspentTransactions := bc.FindUnspentTransactions(address)
+	unspentTransactions := bc.FindUnspentTransactions(address,[]*Transaction{})
 
 	for _, tx := range unspentTransactions {
 		for _, out := range tx.Vouts {
@@ -247,7 +266,7 @@ func (bc *BlockChain) FindUTXO(address string) []*TxOutput {
 //返回UTXO
 func (bc *BlockChain)UnUTXOs(address string)[]*UTXO{
 	var utxos []*UTXO
-	unspentTransactions := bc.FindUnspentTransactions(address)
+	unspentTransactions := bc.FindUnspentTransactions(address,[]*Transaction{})
 
 	for _,tx := range unspentTransactions{
 		for outIndex, out := range tx.Vouts {
@@ -259,6 +278,9 @@ func (bc *BlockChain)UnUTXOs(address string)[]*UTXO{
 	return utxos
 }
 
+
+//查询所有未花费输出
+//迭代每一个区块，然后迭代每一个transanction（transaction要从数组末尾往前迭代），这个跟写入相反
 func (bc *BlockChain)UTXOOut(address string)[]*TxOutput{
 
 	//var unspentTXs []Transaction
@@ -267,11 +289,13 @@ func (bc *BlockChain)UTXOOut(address string)[]*TxOutput{
 	bci := bc.Iterator()
 	for {
 		block := bci.Next()
-		for _, tx := range block.Txs{
+		txNum := len(block.Txs)
+		var tx *Transaction
+		for i:=txNum-1; i>=0; i--{
+			tx = block.Txs[i]
 			txHash := hex.EncodeToString(tx.TxHash)
-
 			//1、遍历输出
-		Outputs:
+			Outputs:
 			for outIdx,out:= range tx.Vouts {
 				if spentTXOs[txHash] != nil {
 					for _,spendOut := range spentTXOs[txHash]{
@@ -285,7 +309,6 @@ func (bc *BlockChain)UTXOOut(address string)[]*TxOutput{
 					utxoOuts = append(utxoOuts, out)
 				}
 			}
-
 			//遍历输入
 			if tx.IsCoinBaseTx() == false {
 				for _, in := range tx.Vins{
@@ -307,9 +330,9 @@ func (bc *BlockChain)UTXOOut(address string)[]*TxOutput{
 }
 
 //查询可花费的TxOUTs
-func (bc *BlockChain) FindSpendableOutputs(address string, amount int64) (int64, map[string][]int64) {
+func (bc *BlockChain) FindSpendableOutputs(address string, amount int64, txs []*Transaction) (int64, map[string][]int64) {
 	unspentOutputs := make(map[string][]int64)
-	unspentTXs := bc.FindUnspentTransactions(address)
+	unspentTXs := bc.FindUnspentTransactions(address, txs)
 	var accumulated int64 = 0
 Work:
 	for _, tx := range unspentTXs {
@@ -335,10 +358,16 @@ Work:
 
 //获取账户余额
 func (bc *BlockChain)GetBalance(address string)int64{
-	unUtxos := bc.UnUTXOs(address)
+	//unUtxos := bc.UnUTXOs(address)
+	//var balances int64 = 0
+	//for _, unUtxo := range unUtxos{
+	//	balances += unUtxo.Outputs.Value
+	//}
+
+	untx := bc.UTXOOut(address)
 	var balances int64 = 0
-	for _, unUtxo := range unUtxos{
-		balances += unUtxo.Outputs.Value
+	for _, unUtxo := range untx{
+		balances += unUtxo.Value
 	}
 	return balances
 }

@@ -35,12 +35,12 @@ func NewCoinBaseTransaction(address string)*Transaction{
 }
 
 //2、转账时产生的Transaction
-func NewSimpleTransaction(from, to string, amount int64, bc *BlockChain)*Transaction{
+func NewSimpleTransaction(from, to string, amount int64, bc *BlockChain, txs []*Transaction)*Transaction{
 
 	var txInputs []*TxInput
 	var txOutputs []*TxOutput
 
-	money, spendableUtxos := bc.FindSpendableOutputs(from,amount)
+	money, spendableUtxos := bc.FindSpendableOutputs(from,amount,txs)
 	for txhash, indexArray := range spendableUtxos{
 		txhashBytes, _ := hex.DecodeString(txhash)
 		for _,index := range indexArray{
@@ -61,40 +61,6 @@ func NewSimpleTransaction(from, to string, amount int64, bc *BlockChain)*Transac
 	tx.HashTransaction()
 	return tx
 }
-
-//基于UTXO模型,新建transaction
-func (bc *BlockChain)NewUTXOTransaction(from, to string, amount int64) *Transaction {
-	var inputs []*TxInput
-	var outputs []*TxOutput
-
-	acc, validOutputs := bc.FindSpendableOutputs(from, amount)
-
-	if acc < amount {
-		log.Panic("ERROR: Not enough funds")
-	}
-
-	// Build a list of inputs
-	for txid, outs := range validOutputs {
-		txID, _ := hex.DecodeString(txid)
-
-		for _, out := range outs {
-			input := TxInput{txID, int64(out), from}
-			inputs = append(inputs, &input)
-		}
-	}
-
-	// Build a list of outputs
-	outputs = append(outputs, &TxOutput{amount, to})
-	if acc > amount {
-		outputs = append(outputs, &TxOutput{acc - amount, from}) // a change
-	}
-
-	tx := Transaction{nil, inputs, outputs}
-	tx.HashTransaction()
-
-	return &tx
-}
-
 
 func (tx *Transaction)HashTransaction(){
 	var result bytes.Buffer
