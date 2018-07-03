@@ -1,0 +1,17 @@
+./main.exe send -from '[\"xiao\", \"zhang\"]' -to '[\"jian\", \"ming\"]' -amount '[\"4\",\"3\"]'
+
+./main.exe send -from '[\"xiaojianming\"]' -to '[\"zhang\"]' -amount '[\"4\"]'
+
+./main.exe send -from '[\"zhang\"]' -to '[\"wang\"]' -amount '[\"2\"]'
+
+1、创世区块（xiaojianming,10个token）
+ .\main.exe createblockchain -address "xiaojianming"
+
+2、第二个区块：xiaojianming 转4个token给zhang
+./main.exe send -from '[\"xiaojianming\"]' -to '[\"zhang\"]' -amount '[\"4\"]'
+
+3、第三个区块：zhang转wang 2个token
+./main.exe send -from '[\"zhang\"]' -to '[\"wang\"]' -amount '[\"2\"]'
+
+4、第四个区块：xiaojianming转4个token给zhang
+./main.exe send -from '[\"xiaojianming\"]' -to '[\"zhang\"]' -amount '[\"4\"]'
