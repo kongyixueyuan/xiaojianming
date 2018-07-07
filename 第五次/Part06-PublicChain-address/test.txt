@@ -1,0 +1,52 @@
+./main.exe send -from '[\"xiao\", \"zhang\"]' -to '[\"jian\", \"ming\"]' -amount '[\"4\",\"3\"]'
+
+./main.exe send -from '[\"xiaojianming\"]' -to '[\"zhang\"]' -amount '[\"4\"]'
+
+./main.exe send -from '[\"zhang\"]' -to '[\"wang\"]' -amount '[\"2\"]'
+
+.\main.exe getBalance -address "xiaojianming"
+
+1、创世区块（xiaojianming,10个token）
+ .\main.exe createblockchain -address "xiaojianming"
+
+2、第二个区块：xiaojianming 转4个token给zhang
+./main.exe send -from '[\"xiaojianming\"]' -to '[\"zhang\"]' -amount '[\"4\"]'
+
+3、第三个区块：zhang转wang 2个token
+./main.exe send -from '[\"zhang\"]' -to '[\"wang\"]' -amount '[\"2\"]'
+
+4、第四个区块：xiaojianming转4个token给zhang
+./main.exe send -from '[\"xiaojianming\"]' -to '[\"zhang\"]' -amount '[\"4\"]'
+
+./main.exe send -from '[\"zhang\"]' -to '[\"wang\"]' -amount '[\"2\"]'
+
+1、
+.\main.exe createblockchain -address "张三"
+.\main.exe getBalance -address "张三"
+.\main.exe printblockchain
+xiaojianming -->10
+
+2、
+./main.exe send -from '[\"张三\"]' -to '[\"李四\"]' -amount '[\"7\"]'
+.\main.exe getBalance -address "张三"
+.\main.exe getBalance -address "李四"
+.\main.exe printblockchain
+张三：3
+李四:7
+
+3、
+./main.exe send -from '[\"李四\",\"李四\"]' -to '[\"张三\",\"王五\"]' -amount '[\"1\",\"2\"]'
+.\main.exe getBalance -address "张三"
+.\main.exe getBalance -address "李四"
+.\main.exe getBalance -address "王五"
+张三:4
+李四:4
+王五:2
+
+4、
+./main.exe send -from '[\"张三\"]' -to '[\"王五\"]' -amount '[\"3\"]'
+张三:1
+李四:4
+王五:5
+
+./main.exe send -from '[\"李四\"]' -to '[\"王五\"]' -amount '[\"4\"]'

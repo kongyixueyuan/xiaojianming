@@ -48,25 +48,24 @@ func CreateGenesisBlock(tx []*Transaction) *Block{
 //打印区块信息
 func (block *Block)GetBlockInfo(){
 	fmt.Println("[")
-	fmt.Println("Block Height:", block.Height)
-	fmt.Printf("Txs:\n")
+	fmt.Printf("Block Height:%d\n", block.Height)
+	fmt.Printf("Timestamp   :%v\n", time.Unix(block.Timestamp,0).Format("2006-01-02 03:04:05 PM"))
+	fmt.Printf("PrevHash    :0x%x\n", block.PrevHash)
+	fmt.Printf("Hash        :0x%x\n", block.Hash)
+	fmt.Printf("Nonce       :%d\n", block.Nonce)
+	fmt.Printf("Transactions:\n")
 	for _,tx:=range block.Txs{
-		fmt.Printf("Transaction Hash:0x%x\n", tx.TxHash)
-		fmt.Println("Vins:")
+	    fmt.Printf("     Tx Hash:0x%x\n", tx.TxHash)
+		fmt.Printf("        Vins:\n")
 		for _,in := range tx.Vins{
-			fmt.Printf("[0x%x %d, %s]\n", in.TxHash, in.Vout, in.ScriptSig)
+		fmt.Printf("             [0x%x %d, %s]\n", in.TxHash, in.Vout, in.ScriptSig)
 		}
 
-		fmt.Println("Vouts:")
+		fmt.Printf("       Vouts:\n")
 		for _,out := range tx.Vouts{
-			fmt.Printf("[%d ", out.Value)
-			fmt.Printf("%s]\n", out.ScriptPubKey)
+			fmt.Printf("             [%d %s]\n", out.Value,out.ScriptPubKey)
 		}
 	}
-	fmt.Println("Timestamp:", time.Unix(block.Timestamp,0).Format("2006-01-02 03:04:05 PM"))
-	fmt.Printf("PrevHash:0x%x\n", block.PrevHash)
-	fmt.Printf("Hash    :0x%x\n", block.Hash)
-	fmt.Printf("Nonce:%d\n", block.Nonce)
 	fmt.Println("]")
 }
 
